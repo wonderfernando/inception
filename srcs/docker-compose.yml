@@ -3,7 +3,7 @@ services:
     build: requirements/nginx
     container_name: nginx
     ports:
-      - "443:443"
+      - "7777:7777"
     volumes:
       - wordpress_data:/var/www/html
     depends_on:

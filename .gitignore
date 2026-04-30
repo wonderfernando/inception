@@ -1,5 +1,5 @@
-.DS_Store
+#.DS_Store
 #*.md
-#README*.md
-#srcs/*.env
-#secrets/*.txt
+README*.md
+srcs/*.env
+secrets/*.txt

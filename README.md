@@ -43,7 +43,7 @@ make re
 ```
 
 ## Usage Examples
-
+srcs/requirements/nginx/conf/default.conf
 ### View running containers
 ```bash
 docker compose -f srcs/docker-compose.yml ps
