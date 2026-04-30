@@ -319,3 +319,107 @@ make logs        # tail todos os logs
 - **Secrets**: Ficheiros em `secrets/` contêm passwords reais (não versionados).
 - **Init SQL**: MariaDB só executa `init.sql` na primeira vez (se `/var/lib/mysql` vazio).
 - **PHP-FPM**: Escuta em TCP (`wordpress:9000`), não socket UNIX.
+
+---
+
+## PHP-FPM
+
+### O que é PHP-FPM?
+
+**PHP-FPM** (FastCGI Process Manager) é um alternativa ao PHP CGI que oferece melhor desempenho e gestão de processos PHP. Enquanto o PHP tradicional executa cada pedido num novo processo (lento), o PHP-FPM mantém um pool de processos persistentes prontos para processar pedidos.
+
+**FastCGI** é o protocolo que permite ao servidor web (NGINX) comunicar com o PHP-FPM de forma eficiente, usando TCP em vez de sockets UNIX.
+
+### Por que usar PHP-FPM?
+
+- **Performance**: Processos PHP ficam residentes em memória, evitando o overhead de iniciar um novo processo para cada pedido
+- **Gestão de processos**: Permite configurar quantos processos filhos criar, mínimo/máximo de processos ociosos, etc.
+- **Isolamento**: Cada pedido pode ser executado por um utilizador diferente (security)
+- **Pool management**: Multiple pools com configurações diferentes
+
+### Configuração: `conf/php-fpm.conf`
+
+```php
+[www]
+user = www-data
+group = www-data
+listen = 0.0.0.0:9000
+listen.owner = www-data
+listen.group = www-data
+pm = dynamic
+pm.max_children = 5
+pm.min_spare_servers = 1
+pm.max_spare_servers = 3
+pm.max_requests = 500
+```
+
+### Parâmetros principais:
+
+| Parâmetro | Definição |
+|-----------|-----------|
+| `[www]` | Nome do pool de processos |
+| `user` / `group` | Utilizador/grupo que executa os processos PHP |
+| `listen` | Endereço onde PHP-FPM escuta pedidos (TCP:9000) |
+| `pm` | Gestor de processos: `static`, `dynamic`, ou `ondemand` |
+| `pm.max_children` | Máximo de processos filhos simultâneos |
+| `pm.min_spare_servers` | Mínimo de processos ociosos (prontos) |
+| `pm.max_spare_servers` | Máximo de processos ociosos |
+| `pm.max_requests` | Máximo de pedidos antes de reiniciar processo (evita memory leaks) |
+
+### Modos do PM:
+
+- **`dynamic`**: Cria processos conforme necessidade, entre min e max
+- **`static`**: Mantém sempre `pm.max_children` processos
+- **`ondemand`**: Cria processos apenas quando há pedidos (mais leve, mais lento no primeiro pedido)
+
+### Como NGINX comunica com PHP-FPM?
+
+No `nginx.conf`:
+
+```nginx
+location ~ \.php$ {
+    include fastcgi_params;
+    fastcgi_pass wordpress:9000;      # IP:porto do container PHP-FPM
+    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+}
+```
+
+1. NGINX recebe pedido de `index.php`
+2. Passa o pedido via FastCGI para `wordpress:9000`
+3. PHP-FPM ejecuta o script PHP
+4. Retorna o output para NGINX
+5. NGINX entrega ao cliente
+
+---
+
+## init.sql
+
+### O que é?
+
+`init.sql` é executado automaticamente na primeira vez que MariaDB inicia, criando a base de dados e o utilizador para o WordPress.
+
+```sql
+CREATE DATABASE IF NOT EXISTS fernando_wordpress;
+CREATE USER IF NOT EXISTS 'fernando_wp'@'%' IDENTIFIED BY '[WORDPRESS_DB_PASSWORD]';
+GRANT ALL PRIVILEGES ON fernando_wordpress.* TO 'fernando_wp'@'%';
+FLUSH PRIVILEGES;
+```
+
+### Queries explicadas:
+
+| Query | Função |
+|-------|--------|
+| `CREATE DATABASE` | Cria a BD onde WordPress guarda posts, utilizadores, etc. |
+| `CREATE USER` | Cria o utilizador que o WordPress usa para conectar |
+| `GRANT ALL PRIVILEGES` | Dá permissões totais ao user sobre a BD |
+| `FLUSH PRIVILEGES` | Recarrega a tabela de privilégios |
+
+### Por que `%` no user?
+
+`'fernando_wp'@'%'` significa o user pode conectar de qualquer host (`%`). Isto é necessário porque o container WordPress tem um IP diferente do MariaDB.
+
+### Quando executa?
+
+O `docker-entrypoint.sh` verifica se `/var/lib/mysql` está vazio:
+- Se vazio → executa `mysql_install_db` e depois `init.sql`
+- Se não vazio → salta a inicialização (dados já existem)
