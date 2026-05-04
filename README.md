@@ -13,8 +13,32 @@ Clone the repository and run the Makefile to build the images and deploy the con
 make
 ```
 
-### Execution
-To view the running containers:
+This will:
+1. Create the data directories
+2. Build all Docker images
+3. Start all containers
+
+### Stop
+
+```bash
+make down
+```
+
+### Clean (removes all containers and volumes)
+
+```bash
+make clean
+```
+
+### Rebuild
+
+```bash
+make re
+```
+
+## Usage Examples
+srcs/requirements/nginx/conf/default.conf
+### View running containers
 ```bash
 docker compose -f srcs/docker-compose.yml ps
 ```
