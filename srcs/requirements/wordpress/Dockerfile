@@ -27,8 +27,7 @@ RUN curl -o /tmp/wordpress.tar.gz https://wordpress.org/latest.tar.gz \
     && tar -xzf /tmp/wordpress.tar.gz -C /var/www/html --strip-components=1 \
     && rm /tmp/wordpress.tar.gz
 
-RUN cp /var/www/html/wp-config-sample.php /var/www/html/wp-config.php \
-    && chown -R www-data:www-data /var/www/html \
+RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
 COPY conf/php-fpm.conf /etc/php/8.2/fpm/pool.d/www.conf

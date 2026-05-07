@@ -19,11 +19,10 @@ else
     exit 1
 fi
 
-# Se o banco ainda não foi inicializado
-if [ ! -d "/var/lib/mysql/mysql" ]; then
+if [ ! -f "/var/lib/mysql/.initialized" ]; then
     echo "Inicializando MariaDB pela primeira vez..."
     mysql_install_db --user=mysql --datadir=/var/lib/mysql
-    
+
     echo "Configurando banco e usuários..."
     mysqld --user=mysql --datadir=/var/lib/mysql --bootstrap << EOF
 USE mysql;
@@ -34,6 +33,8 @@ CREATE USER IF NOT EXISTS '$WORDPRESS_DB_USER'@'%' IDENTIFIED BY '$WORDPRESS_DB_
 GRANT ALL PRIVILEGES ON $WORDPRESS_DB_NAME.* TO '$WORDPRESS_DB_USER'@'%';
 FLUSH PRIVILEGES;
 EOF
+
+    touch /var/lib/mysql/.initialized
 fi
 
 echo "Iniciando MariaDB..."

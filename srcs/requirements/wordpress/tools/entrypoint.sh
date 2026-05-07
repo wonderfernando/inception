@@ -1,21 +1,23 @@
 #!/bin/bash
 set -e
-
 # Lê o segredo da senha do banco
 WORDPRESS_DB_PASSWORD=$(cat /run/secrets/db_password)
+# Espera o MariaDB estar pronto
+until mysqladmin ping -h"$WORDPRESS_DB_HOST" -u"$WORDPRESS_DB_USER" -p"$WORDPRESS_DB_PASSWORD" --silent; do
+    echo "Aguardando o MariaDB..."
+    sleep 2
+done
+
+
 
 
 cd /var/www/html
 
-# Cria o wp-config.php se não existir
-if [ ! -f wp-config.php ]; then
-    echo "Configurando wp-config.php..."
-    wp config create --allow-root \
-        --dbname="$WORDPRESS_DB_NAME" \
-        --dbuser="$WORDPRESS_DB_USER" \
-        --dbpass="$WORDPRESS_DB_PASSWORD" \
-        --dbhost="$WORDPRESS_DB_HOST"
-fi
+sed -i "s/define( 'DB_NAME', '.*' );/define( 'DB_NAME', '$WORDPRESS_DB_NAME' );/" wp-config.php
+sed -i "s/define( 'DB_USER', '.*' );/define( 'DB_USER', '$WORDPRESS_DB_USER' );/" wp-config.php
+sed -i "s/define( 'DB_PASSWORD', '.*' );/define( 'DB_PASSWORD', '$WORDPRESS_DB_PASSWORD' );/" wp-config.php
+sed -i "s/define( 'DB_HOST', '.*' );/define( 'DB_HOST', 'mariadb' );/" wp-config.php
+
 
 # Instala o WordPress se não estiver instalado
 if ! wp core is-installed --allow-root; then
@@ -27,12 +29,7 @@ if ! wp core is-installed --allow-root; then
         --admin_password="$WP_ADMIN_PASSWORD" \
         --admin_email="$WP_ADMIN_EMAIL" \
         --skip-email
-    
-    echo "Criando usuário regular..."
-    wp user create --allow-root \
-        "$WP_USER" "$WP_USER_EMAIL" \
-        --user_pass="$WP_USER_PASSWORD" \
-        --role=author
+ 
 fi
 
 echo "Iniciando PHP-FPM..."
