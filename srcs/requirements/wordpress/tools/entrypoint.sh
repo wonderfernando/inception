@@ -4,11 +4,6 @@ set -e
 # Lê o segredo da senha do banco
 WORDPRESS_DB_PASSWORD=$(cat /run/secrets/db_password)
 
-# Aguarda o MariaDB estar pronto
-until mysqladmin ping -h "$WORDPRESS_DB_HOST" --user="$WORDPRESS_DB_USER" --password="$WORDPRESS_DB_PASSWORD" --silent; do
-    echo "Aguardando MariaDB em $WORDPRESS_DB_HOST com o usuário $WORDPRESS_DB_USER..."
-    sleep 3
-done
 
 cd /var/www/html
 

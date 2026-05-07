@@ -49,7 +49,7 @@ services:
       - db_password
       - db_root_password
     healthcheck:
-      test: ["sh", "-c", "mysqladmin ping -h localhost --password=$(cat /run/secrets/db_root_password)"]
+      test: ["CMD", "sh", "-c", "mysqladmin ping -h localhost --password=$(cat /run/secrets/db_root_password)"]
       interval: 10s
       timeout: 5s
       retries: 5
