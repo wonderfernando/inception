@@ -1,25 +1,44 @@
 #!/bin/bash
-
 set -e
 
- 
-# Lê o secret com fallback para variável de ambiente
-if [ -f /run/secrets/db_password ]; then
-    DB_PASSWORD=$(cat /run/secrets/db_password)
-elif [ -n "${WORDPRESS_DB_PASSWORD}" ]; then
-    DB_PASSWORD="${WORDPRESS_DB_PASSWORD}"
-else
-    echo "ERRO: senha do banco não encontrada em /run/secrets/db_password nem em WORDPRESS_DB_PASSWORD"
-    exit 1
+# Lê o segredo da senha do banco
+WORDPRESS_DB_PASSWORD=$(cat /run/secrets/db_password)
+
+# Aguarda o MariaDB estar pronto
+until mysqladmin ping -h "$WORDPRESS_DB_HOST" --user="$WORDPRESS_DB_USER" --password="$WORDPRESS_DB_PASSWORD" --silent; do
+    echo "Aguardando MariaDB em $WORDPRESS_DB_HOST com o usuário $WORDPRESS_DB_USER..."
+    sleep 3
+done
+
+cd /var/www/html
+
+# Cria o wp-config.php se não existir
+if [ ! -f wp-config.php ]; then
+    echo "Configurando wp-config.php..."
+    wp config create --allow-root \
+        --dbname="$WORDPRESS_DB_NAME" \
+        --dbuser="$WORDPRESS_DB_USER" \
+        --dbpass="$WORDPRESS_DB_PASSWORD" \
+        --dbhost="$WORDPRESS_DB_HOST"
 fi
 
-# Configura o wp-config.php
-sed -i "s|database_name_here|${WORDPRESS_DB_NAME}|" /var/www/html/wp-config.php
-sed -i "s|username_here|${WORDPRESS_DB_USER}|"      /var/www/html/wp-config.php
-sed -i "s|password_here|${DB_PASSWORD}|"            /var/www/html/wp-config.php
-sed -i "s|localhost|${WORDPRESS_DB_HOST}|"          /var/www/html/wp-config.php
+# Instala o WordPress se não estiver instalado
+if ! wp core is-installed --allow-root; then
+    echo "Instalando WordPress..."
+    wp core install --allow-root \
+        --url="$DOMAIN_NAME" \
+        --title="Inception Project" \
+        --admin_user="$WP_ADMIN_USER" \
+        --admin_password="$WP_ADMIN_PASSWORD" \
+        --admin_email="$WP_ADMIN_EMAIL" \
+        --skip-email
+    
+    echo "Criando usuário regular..."
+    wp user create --allow-root \
+        "$WP_USER" "$WP_USER_EMAIL" \
+        --user_pass="$WP_USER_PASSWORD" \
+        --role=author
+fi
 
-
-# Inicia o PHP-FPM
 echo "Iniciando PHP-FPM..."
-exec php-fpm7.4 -F
+exec php-fpm8.2 -F
