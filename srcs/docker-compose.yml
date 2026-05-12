@@ -1,5 +1,6 @@
 services:
   nginx:
+    image_name: nginx
     build: requirements/nginx
     container_name: nginx
     ports:
@@ -13,6 +14,7 @@ services:
     restart: always
 
   wordpress:
+    image_name: wordpress
     build: requirements/wordpress
     container_name: wordpress
     volumes:
@@ -35,6 +37,7 @@ services:
       - wp_user_password
 
   mariadb:
+    image_name: mariadb
     build: requirements/mariadb
     container_name: mariadb
     volumes:
