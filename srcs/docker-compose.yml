@@ -31,6 +31,8 @@ services:
     restart: always
     secrets:
       - db_password
+      - wp_admin_password
+      - wp_user_password
 
   mariadb:
     build: requirements/mariadb
@@ -64,16 +66,20 @@ volumes:
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/home/ferda-si/data/mariadb'
+      device: /home/ferda-si/data/mariadb
   wordpress_data:
     driver: local
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/home/ferda-si/data/wordpress'
+      device: /home/ferda-si/data/wordpress
 
 secrets:
   db_password:
     file: ../secrets/db_password.txt
   db_root_password:
     file: ../secrets/db_root_password.txt
+  wp_admin_password:
+    file: ../secrets/wp_admin_password.txt
+  wp_user_password:
+    file: ../secrets/wp_user_password.txt

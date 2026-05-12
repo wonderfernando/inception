@@ -1,27 +1,195 @@
 # User Documentation
 
-## Services Provided by the Stack
-This infrastructure provides a fully functional, containerized web environment consisting of three core services:
-- **NGINX**: Acts as the reverse proxy and web server, securely handling HTTPS requests (port 443) and routing them to the correct internal services.
-- **WordPress**: A widely used Content Management System (CMS) serving the main website content, utilizing PHP.
-- **MariaDB**: A relational database storing all of the WordPress site's persistent data (such as users, posts, and configurations).
+## Overview
 
-## Starting and Stopping the Project
-- **Start the project**: Open your terminal, navigate to the project root directory, and run `make`. This command will automatically build the necessary images and launch all containers in the background.
-- **Stop the project**: To gracefully stop the running containers without losing persistent data, run `make down`. 
-- **Clean the project**: To stop and completely remove all containers, networks, and data volumes, run `make clean`.
+This project is a self-hosted WordPress infrastructure running in Docker containers. It provides a complete, ready-to-use website with secure connections.
 
-## Accessing the Website and Administration Panel
-- **Main Website**: Open your web browser and navigate to `https://ferda-si.42.fr`. Note: Since the site uses a self-signed SSL certificate, you may need to explicitly accept the security warning in your browser to proceed.
-- **Administration Panel**: Access the WordPress dashboard by navigating to `https://ferda-si.42.fr/wp-admin`.
+## Services Provided
 
-## Locating and Managing Credentials
-Credentials and sensitive information are managed securely using Docker Secrets rather than environment variables.
-- The credentials must be physically stored on the host in the `secrets/` directory at the root of the project before building. Specifically:
-  - `secrets/db_password.txt`
-  - `secrets/db_root_password.txt`
-- Inside the containers, these secrets are securely mounted into the `/run/secrets/` directory, preventing them from being exposed in container metadata or environment variables.
+| Service | Description | Port |
+|---------|-------------|------|
+| NGINX | Reverse proxy with SSL termination | 443 (HTTPS only) |
+| WordPress + PHP-FPM | Content Management System | 9000 (internal) |
+| MariaDB | Database server | 3306 (internal) |
 
-## Checking Services Correctly
-- **Check container status**: Run `docker compose -f srcs/docker-compose.yml ps` to verify that all containers (`nginx`, `wordpress`, `mariadb`) are listed with the "Up" status.
-- **View live logs**: Run `make logs` to view the live output of all services. This is useful for troubleshooting and ensuring no errors are occurring in the background.
+## Quick Start
+
+### Starting the Project
+
+```bash
+make
+```
+
+This command will:
+1. Create data directories
+2. Build Docker images
+3. Start all containers
+
+### Stopping the Project
+
+```bash
+make down
+```
+
+### Restarting
+
+```bash
+make re
+```
+
+### Full Clean
+
+```bash
+make clean
+```
+
+> ⚠️ Warning: `make clean` removes all data including database and uploaded files.
+
+## Accessing the Website
+
+### Website URL
+```
+https://ferda-si.42.fr
+```
+
+### Administration Panel
+```
+https://ferda-si.42.fr/wp-admin
+```
+
+> ⚠️ The SSL certificate is self-signed. Your browser will display a security warning — click "Advanced" and "Proceed to site" to continue.
+
+## Credentials
+
+All credentials are stored in the `secrets/` directory:
+
+| Credential | File | Usage |
+|------------|------|-------|
+| Database password | `secrets/db_password.txt` | WordPress connection |
+| Database root password | `secrets/db_root_password.txt` | MariaDB administration |
+
+### Default WordPress Admin
+| Setting | Value |
+|---------|-------|
+| Username | `ferda_boss` |
+| Password | Check `secrets/db_password.txt` |
+| Email | `ferda@42.fr` |
+
+### Viewing Credentials
+
+```bash
+cat secrets/db_password.txt
+cat secrets/db_root_password.txt
+```
+
+### Changing Credentials
+
+1. Edit the credential files:
+   ```bash
+   nano secrets/db_password.txt
+   nano secrets/db_root_password.txt
+   ```
+
+2. Rebuild and restart:
+   ```bash
+   make re
+   ```
+
+> ⚠️ Changing credentials will require WordPress reconfiguration.
+
+## Checking Services Status
+
+### View All Containers
+
+```bash
+docker compose -f srcs/docker-compose.yml ps
+```
+
+Expected output:
+```
+NAME                STATUS
+mariadb             Up (healthy)
+nginx               Up
+wordpress           Up
+```
+
+### View Logs
+
+```bash
+docker compose -f srcs/docker-compose.yml logs -f
+```
+
+### View Specific Service Logs
+
+```bash
+docker compose -f srcs/docker-compose.yml logs -f nginx
+docker compose -f srcs/docker-compose.yml logs -f wordpress
+docker compose -f srcs/docker-compose.yml logs -f mariadb
+```
+
+### Check Container Health
+
+```bash
+docker inspect mariadb --format='{{.State.Health.Status}}'
+```
+
+Expected output: `healthy`
+
+## Troubleshooting
+
+### Services Not Starting
+
+1. Check if ports are available:
+   ```bash
+   docker compose -f srcs/docker-compose.yml ps
+   ```
+
+2. Verify Docker is running:
+   ```bash
+   docker info
+   ```
+
+### Cannot Access Website
+
+1. Check NGINX is running:
+   ```bash
+   docker compose -f srcs/docker-compose.yml logs nginx
+   ```
+
+2. Verify /etc/hosts entry:
+   ```bash
+   grep ferda-si.42.fr /etc/hosts
+   ```
+   Should show: `127.0.0.1 ferda-si.42.fr`
+
+3. Check SSL certificate:
+   ```bash
+   openssl s_client -connect ferda-si.42.fr:443
+   ```
+
+### Database Connection Issues
+
+1. Verify MariaDB is healthy:
+   ```bash
+   docker exec mariadb mysqladmin ping -h localhost
+   ```
+
+2. Check WordPress can reach MariaDB:
+   ```bash
+   docker exec wordpress ping -c 2 mariadb
+   ```
+
+### Volume Data Location
+
+Persistent data is stored at:
+```
+/home/ferda-si/data/mariadb
+/home/ferda-si/data/wordpress
+```
+
+## Security Notes
+
+- Only HTTPS (port 443) is enabled — HTTP (port 80) is disabled
+- TLS 1.2 and 1.3 are the only allowed protocols
+- Credentials are managed via Docker Secrets
+- Database is only accessible within the internal Docker network

@@ -3,61 +3,63 @@
 # Inception
 
 ## Description
-Inception is a system administration project that teaches how to use Docker and Docker Compose to set up a complete infrastructure. The goal of this project is to broaden your knowledge of system administration by using Docker to set up a robust set of services. It deploys a WordPress site with NGINX as a reverse proxy, MariaDB as the database, and php-fpm to handle PHP requests, all orchestrated via Docker Compose.
+Inception is a system administration project that teaches how to use Docker and Docker Compose to set up a complete infrastructure. The goal of this project is to broaden your knowledge of system administration by using Docker to set up a robust set of services. It deploys a WordPress site with NGINX as a reverse proxy, MariaDB as the database, and PHP-FPM to handle PHP requests, all orchestrated via Docker Compose.
 
 ## Instructions
+### Prerequisites
+- Docker Engine
+- Docker Compose
+- Make
+- OpenSSL (for certificate generation)
+
 ### Compilation and Installation
-Ensure you have Docker Engine, Docker Compose, and Make installed.
-Clone the repository and run the Makefile to build the images and deploy the containers.
 ```bash
 make
 ```
 
 This will:
-1. Create the data directories
+1. Create the required data directories
 2. Build all Docker images
 3. Start all containers
 
-### Stop
+### Access
+- Website: https://ferda-si.42.fr (port 443 only)
+- WordPress Admin: https://ferda-si.42.fr/wp-admin
 
+> ⚠️ The SSL certificate is self-signed. Your browser will show a security warning — proceed anyway.
+
+### Credentials
+```bash
+cat secrets/db_password.txt
+cat secrets/db_root_password.txt
+```
+
+### Stop
 ```bash
 make down
 ```
 
 ### Clean (removes all containers and volumes)
-
 ```bash
 make clean
 ```
 
 ### Rebuild
-
 ```bash
 make re
 ```
 
-## Usage Examples
-srcs/requirements/nginx/conf/default.conf
-### View running containers
-```bash
-docker compose -f srcs/docker-compose.yml ps
-```
-
-To stop the services:
-```bash
-make down
-```
-
 ## Resources
 - [Docker Documentation](https://docs.docker.com/)
-- [NGINX Official Documentation](https://nginx.org/en/docs/)
-- [WordPress Docker Hub](https://hub.docker.com/_/wordpress)
-- [MariaDB Docker Hub](https://hub.docker.com/_/mariadb)
+- [Docker Compose Documentation](https://docs.docker.com/compose/)
+- [NGINX Documentation](https://nginx.org/en/docs/)
+- [WordPress Documentation](https://developer.wordpress.org/)
+- [MariaDB Documentation](https://mariadb.com/kb/en/documentation/)
 
-**AI Usage:** AI was not directly used in the production of the source code, however, it was employed to format and structure this documentation correctly to meet the subject requirements, providing clear explanations for complex technical choices.
+**AI Usage:** AI was used to format and structure this documentation and to understand Docker concepts for the project design.
 
 ## Project Description: Docker and Sources
-This project relies entirely on Docker to containerize services. The `srcs/docker-compose.yml` file is the orchestrator, pulling build instructions from custom Dockerfiles located in `srcs/requirements/` for each service (nginx, wordpress, mariadb).
+This project relies entirely on Docker to containerize services. The `srcs/docker-compose.yml` file is the orchestrator, pulling build instructions from custom Dockerfiles located in `srcs/requirements/` for each service (nginx, wordpress, mariadb). All images are built locally — no pre-built images from DockerHub are used.
 
 ### Virtual Machines vs Docker
 Virtual Machines (VMs) emulate an entire hardware system, running a full guest operating system on top of a hypervisor. This makes VMs heavy and resource-intensive. Docker, on the other hand, uses containerization to run isolated processes sharing the host OS kernel. Containers are much lighter, start almost instantly, and consume significantly fewer resources while ensuring consistency across environments.

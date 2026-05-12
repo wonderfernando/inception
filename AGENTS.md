@@ -27,7 +27,7 @@ docker compose -f srcs/docker-compose.yml logs -f nginx  # tail nginx logs
 
 ## Critical Gotchas
 
-- **Hardcoded paths in Makefile**: `make up` creates `/home/fernando/data` (not parameterized). This path is hardcoded and will fail if the user is not `fernando` or the home directory differs.
+- **Hardcoded paths in Makefile**: `make up` creates `/home/ferda-si/data` (not parameterized). This path is hardcoded and will fail if the user is not `ferda-si` or the home directory differs.
 
 - **Secrets are real**: Files in `secrets/` contain actual credentials (db_password.txt, db_root_password.txt). They are in `.gitignore`.
 
