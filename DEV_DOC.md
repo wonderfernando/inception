@@ -7,7 +7,9 @@
 3. **Secrets Setup**: For security, this project relies on Docker Secrets. Before launching the project, you must create the `secrets/` directory at the project root and populate it with the necessary credential files:
    - `secrets/db_password.txt`: Contains the MariaDB user password.
    - `secrets/db_root_password.txt`: Contains the MariaDB root password.
-
+   - `secrets/wp_admin_password.txt`: Contains the WordPress admin password.
+   - `secrets/wp_user_password.txt`: Contains the WordPress user password.
+   
 ## Building and Launching the Project
 
 The project is orchestrated using a unified `Makefile` at the root directory for consistency and ease of use.

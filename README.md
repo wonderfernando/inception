@@ -72,3 +72,4 @@ Using the host network binds container ports directly to the host's network inte
 
 ### Docker Volumes vs Bind Mounts
 Bind mounts map an exact path from the host machine to a path in the container. While useful for development, they depend on the host's directory structure and permissions. Docker Volumes are managed entirely by Docker, offering better performance, portability, and safety. Volumes are decoupled from the host's filesystem specifics, making them the preferred choice for persisting database data and website files.
+

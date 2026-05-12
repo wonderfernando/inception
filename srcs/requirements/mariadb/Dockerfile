@@ -8,7 +8,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN chown -R mysql:mysql /var/lib/mysql /run/mysqld
 
-COPY tools/init.sql /tmp/init.sql
 COPY tools/docker-entrypoint.sh /docker-entrypoint.sh
 
 RUN chmod +x /docker-entrypoint.sh
